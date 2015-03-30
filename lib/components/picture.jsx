@@ -1,5 +1,5 @@
 var React = require('react');
-var Utils = require('../utils');
+var utils = require('./utils');
 
 
 /** Equivalent to html <img> element
@@ -33,9 +33,9 @@ var ImageComponent = module.exports = React.createClass({
         }
 
         return {
-            w: Utils.getWidth(),
-            h: Utils.getHeight(),
-            x: Utils.getDensity(),
+            w: utils.getWidth(),
+            h: utils.getHeight(),
+            x: utils.getDensity(),
             nativeSupport: nativeSupport
         };
     },
@@ -100,7 +100,24 @@ var ImageComponent = module.exports = React.createClass({
 
 
     onResize: function () {
+              element = elements[i];
+      parent = element.parentNode;
+      firstMatch = undefined;
+      candidates = undefined;
 
+      // return the first match which might undefined
+      // returns false if there is a pending source
+      // TODO the return type here is brutal, cleanup
+      firstMatch = pf.getMatch(this.props.sources);
+
+      if (firstMatch) {
+        candidates = pf.processSourceSet(firstMatch);
+        pf.applyBestCandidate(candidates, element);
+      } else {
+        // No sources matched, so we’re down to processing the inner `img` as a source.
+        candidates = pf.processSourceSet(element);
+        pf.applyBestCandidate(candidates, element);
+      }
         this.setState({w: Utils.getWidth(), h: Utils.getHeight(), x: Utils.getDensity()});
         this.resizing = false;
     },
@@ -193,6 +210,34 @@ var ImageComponent = module.exports = React.createClass({
 
                 return ImageComponent.__compare(a, b, density, function (img) { return img.x; });
             }).url;
-        }
+        },
+
+        // sources is an array of objects with properties, "srcset" and "media"
+        getMatch: function(sources) {
+            var sources, match;
+
+            // Go through each source, and if they have media queries, evaluate them
+            for (var j = 0, slen = sources.length; j < slen; j++) {
+                var {media, srcset} = sources[j];
+
+                // if source does not have a srcset attribute, skip
+                if (!srcset) {
+                    continue;
+                }
+
+                // if there's no media specified, OR w.matchMedia is supported
+                if ((!media || utils.matchesMedia(media))) {
+                    var typeSupported = utils.verifyTypeSupport(source);
+
+                    if (typeSupported === true) {
+                        match = source;
+                        break;
+                    }
+                }
+            }
+
+            return match;
+        };
+
     }
 });

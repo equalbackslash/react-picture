@@ -26,24 +26,27 @@ var ImageComponent = module.exports = React.createClass({
 
     getInitialState: function () {
 
-        var nativeSupport = true;
+        var srcsetSupported = false;
+        var sizesSupported = false;
         if (typeof document !== 'undefined') {
             var img = document.createElement('img');
-            nativeSupport = 'srcset' in img;
+            srcsetSupported = 'srcset' in img;
+            sizesSupported = "sizes" in img;
         }
 
         return {
             w: Utils.getWidth(),
             h: Utils.getHeight(),
             x: Utils.getDensity(),
-            nativeSupport: nativeSupport
+            srcsetSupported: srcsetSupported,
+            sizesSupported: sizesSupported
         };
     },
 
 
     componentDidMount: function () {
 
-        if (!this.state.nativeSupport) {
+        if (!this.state.srcsetSupported) {
             window.addEventListener('resize', this.resizeThrottler, false);
         }
     },
@@ -51,7 +54,7 @@ var ImageComponent = module.exports = React.createClass({
 
     componentWillUnmount: function () {
 
-        if (!this.state.nativeSupport) {
+        if (!this.state.srcsetSupported) {
             window.removeEventListener('resize', this.resizeThrottler, false);
         }
     },
