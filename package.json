@@ -2,7 +2,7 @@
   "name": "react-picture",
   "version": "0.0.2",
   "description": "Responsive images component for React.JS",
-  "main": "./src/index",
+  "main": "./lib/index",
   "scripts": {
     "test": "lab -c -L --lint-options '{\"extensions\":[\".js\",\".jsx\"]}' -S -T lab-transform.js test/client-before.js test/client test/client-after.js test/misc test/server",
     "test-cov-html": "lab -c -S -T lab-transform.js -r html -o coverage.html test/client-before.js test/client test/client-after.js test/misc test/server",
