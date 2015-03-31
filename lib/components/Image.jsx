@@ -31,7 +31,7 @@ var ImageComponent = module.exports = React.createClass({
         if (typeof document !== 'undefined') {
             var img = document.createElement('img');
             srcsetSupported = 'srcset' in img;
-            sizesSupported = "sizes" in img;
+            sizesSupported = 'sizes' in img;
         }
 
         return {

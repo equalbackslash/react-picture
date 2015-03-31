@@ -1,12 +1,12 @@
 var React = require('react');
-var utils = require('./utils');
+var utils = require('../utils');
 
 
 /** Equivalent to html <img> element
   *
-  * <img alt src srcset sizes crossorigin usemap ismap width height>
+  * <picture alt src srcset sizes crossorigin usemap ismap width height>
   */
-var ImageComponent = module.exports = React.createClass({
+var Picture = module.exports = React.createClass({
 
 
     propTypes: {
@@ -19,33 +19,44 @@ var ImageComponent = module.exports = React.createClass({
     getDefaultProps: function () {
 
         return {
+            sources: [],
+            img: {},
             extra: {}
         };
     },
 
+    getElementState: function(element){
+      var sourceState = {};
+      sourceState.srcset = utils.parseSrcset(element.srcset);
+      sourceState.sizes = utils.parseSourceSize(element.sizes);
+      sourceState.media = element.media;
+
+      return sourceState;
+    },
 
     getInitialState: function () {
+      var _this = this;
+      var state = {};
 
-        var nativeSupport = true;
-        if (typeof document !== 'undefined') {
-            var img = document.createElement('img');
-            nativeSupport = 'srcset' in img;
-        }
+      state.sources = this.props.sources.map(function(source){
+        return _this.getElementState(source);
+      });
 
-        return {
-            w: utils.getWidth(),
-            h: utils.getHeight(),
-            x: utils.getDensity(),
-            nativeSupport: nativeSupport
-        };
+      state.img = _this.getElementState(this.props.img);
+
+      state.currentImg = state.img;
+
+      return state;
     },
 
 
     componentDidMount: function () {
 
-        if (!this.state.nativeSupport) {
+        if (typeof window !== 'undefined') {
             window.addEventListener('resize', this.resizeThrottler, false);
         }
+        // after first render get lengths
+        updateStateLength();
     },
 
 
@@ -56,30 +67,128 @@ var ImageComponent = module.exports = React.createClass({
         }
     },
 
+    // pf.getStateFromSourceSet = function(srcset, sizes) {
+    //     var candidates = pf.parseSrcset(srcset),
+    //         formattedCandidates = [];
+
+    //     for (var i = 0, len = candidates.length; i < len; i++) {
+    //         var candidate = candidates[i];
+
+    //         formattedCandidates.push({
+    //             url: candidate.url,
+    //             resolution: pf.parseDescriptor(candidate.descriptor, sizes)
+    //         });
+    //     }
+    //     return formattedCandidates;
+    // };
+
+
+    // // Accept a source or img element and process its srcset and sizes attrs
+    // pf.processSourceSet = function(el) {
+    //     var srcset = el.srcset,
+    //         sizes = el.sizes,
+    //         candidates = el.canidates || [];
+
+    //     if (srcset) {
+    //         candidates = pf.getStateFromSourceSet(srcset, sizes);
+    //     }
+    //     return i ;
+    // };
+
+    // sources is an array of objects with properties, "srcset" and "media"
+    getMatch: function(sources) {
+      var sources, match;
+
+      // Go through each source, and if they have media queries, evaluate them
+      for (var j = 0, slen = sources.length; j < slen; j++) {
+        var source = sources[j];
+        var media = source.media;
+        var srcset = source.srcset;
+
+        // if source does not have a srcset attribute, skip
+        if (!srcset) {
+          continue;
+        }
+
+        // if there's no media specified, OR w.matchMedia is supported
+        if ((!media || utils.matchesMedia(media))) {
+          var typeSupported = utils.verifyTypeSupport(source);
+
+          if (typeSupported === true) {
+            match = source;
+            break;
+          }
+        }
+      }
+
+      return match;
+    },
+
+    getUpdateSourceFunction: function(i, j){
+      var _this = this;
+      var state = this.state;
+
+      return function(component) {
+        state.sources[i].sizes[j].cssWidth = React.findDOMNode(component).offsetWidth;
+        _this.setState(state);
+      };
+    },
+
+    getUpdateImgFunction: function(k){
+      var _this = this;
+      var state = this.state;
+
+      return function(component) {
+        state.img.sizes[k].cssWidth = React.findDOMNode(component).offsetWidth;
+        _this.setState(state);
+      };
+    },
+
+    renderLengths: function(){
+      var _this = this;
+      var renderable = [];
+      var sources = this.state.sources || [];
+
+
+      for (var i = 0, slen = this.state.sources.length; i < slen; i++) {
+        var source = this.state.sources[i];
+        sizes = source.sizes || [];
+
+        for (var j = 0, len = sizes.length; j < len; j++) {
+          renderable.push(
+            <div
+              width={size.length}
+              ref={ _this.getUpdateSourceFunction.bind(_this, [i, j])} >
+            </div>
+          );
+        }
+      }
+
+      var imgSizes = this.state.img.sizes || [];
+      for ( var k = 0, lImgLen = imgSizes.length; k < lImgLen; k++) {
+        renderable.push(
+          <div
+            width={imgSizes[k].length}
+            ref={ _this.getUpdateImgFunction.bind(_this, k) } >
+          </div>
+        );
+      }
+
+      return (
+         {renderable}
+      );
+    },
 
     render: function () {
 
-        if (!this.props.srcSet) {
-            return null;
-        }
-
-        var candidates = ImageComponent._buildCandidates(this.props.srcSet);
-
-        if (this.state.nativeSupport) {
-            return this.renderNative(candidates);
-        }
-
-        return (
-            <img alt={this.props.alt} src={ImageComponent._matchImage(candidates, Utils.getHeight(), Utils.getWidth(), Utils.getDensity())} {...this.props.extra}/>
-        );
-    },
 
 
-    renderNative: function (candidates) {
-
-        return (
-            <img alt={this.props.alt} src={candidates[0].url} srcSet={this.props.srcSet} {...this.props.extra} />
-        );
+      return (
+        <div style={{border: 0, display: 'block', fontSize: '1em', left: 0, margin: 0, padding: 0, position: 'absolute', visibility: 'hidden'}} >
+          { this.renderLengths() }
+          <img alt={this.props.img.alt} src={ImageComponent._matchImage(candidates, Utils.getHeight(), Utils.getWidth(), Utils.getDensity())} {...this.props.extra}/>
+        </div>
+      );
     },
 
 
@@ -100,26 +209,24 @@ var ImageComponent = module.exports = React.createClass({
 
 
     onResize: function () {
-              element = elements[i];
+      element = elements[i];
       parent = element.parentNode;
       firstMatch = undefined;
       candidates = undefined;
 
-      // return the first match which might undefined
-      // returns false if there is a pending source
-      // TODO the return type here is brutal, cleanup
-      firstMatch = pf.getMatch(this.props.sources);
 
-      if (firstMatch) {
-        candidates = pf.processSourceSet(firstMatch);
-        pf.applyBestCandidate(candidates, element);
-      } else {
-        // No sources matched, so we’re down to processing the inner `img` as a source.
-        candidates = pf.processSourceSet(element);
-        pf.applyBestCandidate(candidates, element);
-      }
-        this.setState({w: Utils.getWidth(), h: Utils.getHeight(), x: Utils.getDensity()});
-        this.resizing = false;
+
+      // // return the first match which might undefined
+      // firstMatch = utils.getMatch(this.state.sources);
+
+      // if (firstMatch) {
+      //   utils.applyBestCandidate(firstMatch.candidates, element);
+      // } else {
+      //   // No sources matched, so we’re down to processing the inner `img` as a source.
+      //   utils.applyBestCandidate(candidates, element);
+      // }
+      //   this.setState({w: Utils.getWidth(), h: Utils.getHeight(), x: Utils.getDensity()});
+      //   this.resizing = false;
     },
 
 
@@ -210,34 +317,7 @@ var ImageComponent = module.exports = React.createClass({
 
                 return ImageComponent.__compare(a, b, density, function (img) { return img.x; });
             }).url;
-        },
-
-        // sources is an array of objects with properties, "srcset" and "media"
-        getMatch: function(sources) {
-            var sources, match;
-
-            // Go through each source, and if they have media queries, evaluate them
-            for (var j = 0, slen = sources.length; j < slen; j++) {
-                var {media, srcset} = sources[j];
-
-                // if source does not have a srcset attribute, skip
-                if (!srcset) {
-                    continue;
-                }
-
-                // if there's no media specified, OR w.matchMedia is supported
-                if ((!media || utils.matchesMedia(media))) {
-                    var typeSupported = utils.verifyTypeSupport(source);
-
-                    if (typeSupported === true) {
-                        match = source;
-                        break;
-                    }
-                }
-            }
-
-            return match;
-        };
+        }
 
     }
 });

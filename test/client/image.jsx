@@ -61,24 +61,24 @@ describe('JSDOM - Native -', function() {
     });
 
 
-    it('renders a null image', function (done) {
+    // it('renders a null image', function (done) {
 
-        React.render(<Img/>, internals.exDOM());
-        expect(internals.exDOM().innerHTML).to.not.contain('img');
-        done();
-    });
+    //     React.render(<Img/>, internals.exDOM());
+    //     expect(internals.exDOM().innerHTML).to.not.contain('img');
+    //     done();
+    // });
 
 
-    it('render a proper image', function (done) {
+    // it('render a proper image', function (done) {
 
-        React.render(<Img srcSet={internals.sampleSrcSet} alt='text'/>, internals.exDOM());
-        var html = internals.exDOM().innerHTML;
+    //     React.render(<Img srcSet={internals.sampleSrcSet} alt='text'/>, internals.exDOM());
+    //     var html = internals.exDOM().innerHTML;
 
-        expect(html).to.contain('alt="text"');
-        expect(html).to.contain('src="http://fancyserver.com/image.jpg"');
-        expect(html).to.contain('srcset="http://fancyserver.com/image.jpg 600w, http://fancyserver.com/image2.jpg 1000w"');
-        done();
-    });
+    //     expect(html).to.contain('alt="text"');
+    //     expect(html).to.contain('src="http://fancyserver.com/image.jpg"');
+    //     expect(html).to.contain('srcset="http://fancyserver.com/image.jpg 600w, http://fancyserver.com/image2.jpg 1000w"');
+    //     done();
+    // });
 });
 
 describe('JSDOM - Not native -', function() {
@@ -105,24 +105,24 @@ describe('JSDOM - Not native -', function() {
     });
 */
 
-    it('renders a null image', function (done) {
+    // it('renders a null image', function (done) {
 
-        React.render(<Img/>, internals.exDOM());
-        expect(internals.exDOM().innerHTML).to.not.contain('img');
-        done();
-    });
+    //     React.render(<Img/>, internals.exDOM());
+    //     expect(internals.exDOM().innerHTML).to.not.contain('img');
+    //     done();
+    // });
 
 
-    it('render a proper image', function (done) {
+    // it('render a proper image', function (done) {
 
-        React.render(<Img srcSet={internals.sampleSrcSet} alt='text'/>, internals.exDOM());
-        var html = internals.exDOM().innerHTML;
+    //     React.render(<Img srcSet={internals.sampleSrcSet} alt='text'/>, internals.exDOM());
+    //     var html = internals.exDOM().innerHTML;
 
-        expect(html).to.contain('alt="text"');
-        expect(html).to.contain('src="http://fancyserver.com/image2.jpg"');
-        expect(html).to.not.contain('srcset');
-        done();
-    });
+    //     expect(html).to.contain('alt="text"');
+    //     expect(html).to.contain('src="http://fancyserver.com/image2.jpg"');
+    //     expect(html).to.not.contain('srcset');
+    //     done();
+    // });
 /*
     it('resize the viewport', function (done) {
 
